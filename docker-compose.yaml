@@ -1,0 +1,22 @@
+services:
+  pg:
+    image: postgres
+    environment:
+      POSTGRES_DB: kvitto
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - pg
+    environment:
+      APP_CONFIG__DB__URL: postgresql+asyncpg://user:password@pg:5432/kvitto
+
+volumes:
+  postgres_data:
