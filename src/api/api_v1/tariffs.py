@@ -7,6 +7,8 @@ from infrastructure.errors import (
     TariffNotFoundError,
     handle_tariff_not_found,
 )
+from infrastructure.errors.handlers import handle_tariff_in_use
+from infrastructure.errors.tariff import TariffInUseError
 from infrastructure.services import TariffService
 from schemas.tariff import (
     TariffCreate,
@@ -82,3 +84,5 @@ async def delete_tariff(
         await tariff_svc.delete_tariff(tariff_id)
     except TariffNotFoundError:
         handle_tariff_not_found()
+    except TariffInUseError:
+        handle_tariff_in_use()
