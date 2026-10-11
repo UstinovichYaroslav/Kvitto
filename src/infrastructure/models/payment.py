@@ -30,5 +30,10 @@ class Payment(Base):
     installment_months: Mapped[int | None] = mapped_column(Integer, nullable=True)
     schedule: Mapped[list[int] | None] = mapped_column(JSON, nullable=True)  # список сумм в копейках
     email: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    idempotency_key: Mapped[str | None] = mapped_column(String(255), unique=True, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+    )
+    idempotency_key: Mapped[str | None] = mapped_column(
+        String(255), unique=True, nullable=True,
+    )
