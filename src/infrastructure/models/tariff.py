@@ -1,7 +1,7 @@
 from sqlalchemy import Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from kvitto.infrastructure.models.base import Base
+from .base import Base
 
 
 class Tariff(Base):

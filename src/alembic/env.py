@@ -1,11 +1,11 @@
 import asyncio  # noqa:INP001
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+from alembic import context
 from core import settings
 from infrastructure.models.base import Base
 
