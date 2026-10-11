@@ -1,7 +1,10 @@
+from typing import ClassVar
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.errors import PaymentNotFoundError
-from infrastructure.models.payment import PaymentMethod, PaymentStatus
+from infrastructure.errors.payment import InvalidTransitionError
+from infrastructure.models.payment import PaymentStatus, PaymentMethod
 from infrastructure.repositories.payment import PaymentRepository
 from schemas.payment import (
     PaymentCreate,
@@ -14,6 +17,26 @@ from schemas.payment import (
 )
 
 
+class PaymentStateMachine:
+    VALID_TRANSITIONS: ClassVar[dict[PaymentStatus, frozenset[PaymentStatus]]] = {
+        PaymentStatus.PENDING: frozenset(
+            {PaymentStatus.SUCCEEDED, PaymentStatus.FAILED}
+        ),
+        PaymentStatus.SUCCEEDED: frozenset({PaymentStatus.REFUNDED}),
+        PaymentStatus.FAILED: frozenset(),
+        PaymentStatus.REFUNDED: frozenset(),
+    }
+
+    @classmethod
+    def can_transition(cls, src: PaymentStatus, dst: PaymentStatus) -> bool:
+        return dst in cls.VALID_TRANSITIONS.get(src, frozenset())
+
+    @classmethod
+    def assert_transition(cls, src: PaymentStatus, dst: PaymentStatus) -> None:
+        if not cls.can_transition(src, dst):
+            raise InvalidTransitionError(src, dst)
+
+
 class PaymentService:
     VALID_TRANSITIONS = {  # noqa: RUF012
         PaymentStatus.PENDING: [PaymentStatus.SUCCEEDED, PaymentStatus.FAILED],
@@ -23,6 +46,7 @@ class PaymentService:
     }
 
     def __init__(self, session: AsyncSession) -> None:
+        self.session = session
         self.payment_repo = PaymentRepository(session)
 
     async def get_all_payments(self) -> list[PaymentResponse]:
@@ -47,8 +71,6 @@ class PaymentService:
     async def create_payment(self, payment_data: PaymentCreate) -> PaymentResponse:
         """Создаёт платёж и возвращает PaymentResponse"""
         payment = await self.payment_repo.create(payment_data)
-        await self.payment_repo.session.commit()
-
         return PaymentResponse.model_validate(payment)
 
     async def update_payment_status(
@@ -60,6 +82,7 @@ class PaymentService:
         payment = await self.payment_repo.get_by_id(payment_id)
         if not payment:
             raise PaymentNotFoundError(payment_id)
+        PaymentStateMachine.assert_transition(payment.status, new_status)
         updated_payment = await self.payment_repo.update_status(payment, new_status)
         return PaymentResponse.model_validate(updated_payment)
 
@@ -122,10 +145,10 @@ class PaymentService:
 
         if not self.validate_status_transition(payment.status, webhook_data.status):
             msg = "invalid_transition"
-            raise ValueError(msg)
+            raise ValueError(msg)  # TODO custom error
 
         await self.update_payment_status(webhook_data.payment_id, webhook_data.status)
-        await self.payment_repo.session.commit()
+        await self.session.commit()
 
         return WebhookResponse().model_dump()
 
@@ -139,7 +162,6 @@ class PaymentService:
         if not payment:
             raise PaymentNotFoundError(payment_id)
         updated = await self.payment_repo.update(payment, payment_data)
-        await self.payment_repo.session.commit()
         return PaymentResponse.model_validate(updated)
 
     async def partial_update_payment(
