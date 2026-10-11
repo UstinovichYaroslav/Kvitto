@@ -20,29 +20,27 @@ class TariffRepository:
     async def create(self, tariff_data: TariffCreate) -> Tariff:
         tariff = Tariff(**tariff_data.model_dump())
         self.session.add(tariff)
-        await self.session.flush()
-        await self.session.refresh(tariff)
+        await self.session.commit()
         return tariff
 
     async def update(self, tariff: Tariff, tariff_data: TariffUpdate) -> Tariff:
         """Полное обновление тарифа"""
         for key, value in tariff_data.model_dump().items():
             setattr(tariff, key, value)
-        await self.session.flush()
-        await self.session.refresh(tariff)
+        await self.session.commit()
         return tariff
 
     async def partial_update(
-        self, tariff: Tariff, tariff_data: TariffPartialUpdate,
+        self,
+        tariff: Tariff,
+        tariff_data: TariffPartialUpdate,
     ) -> Tariff:
         """Частичное обновление тарифа"""
         for key, value in tariff_data.model_dump(exclude_unset=True).items():
             setattr(tariff, key, value)
-        await self.session.flush()
-        await self.session.refresh(tariff)
+        await self.session.commit()
         return tariff
 
     async def delete(self, tariff: Tariff) -> None:
         """Удаление тарифа"""
         await self.session.delete(tariff)
-        await self.session.flush()
