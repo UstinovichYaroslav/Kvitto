@@ -62,6 +62,7 @@ exclude = [
     "site-packages",
     "venv",
     ".venv",
+    "alembic",
 ]
 
 # Same as Black.
@@ -74,7 +75,6 @@ src = [
 
 # Assume Python 3.10
 target-version = "py313"
-
 [tool.ruff.lint]
 select = [
     "FAST", # FastAPI (FAST)
@@ -145,6 +145,7 @@ unfixable = []
 "stuff.py" = [
     "T20",
 ]
+
 
 [tool.pytest.ini_options]
 testpaths = ["src/testing"]
