@@ -1,6 +1,8 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.errors import TariffNotFoundError
+from infrastructure.errors.tariff import TariffInUseError
 from infrastructure.repositories.tariff import TariffRepository
 from schemas.tariff import (
     TariffCreate,
@@ -12,6 +14,7 @@ from schemas.tariff import (
 
 class TariffService:
     def __init__(self, session: AsyncSession) -> None:
+        self.session = session
         self.tariff_repo = TariffRepository(session)
 
     async def get_all_tariffs(self) -> list[TariffResponse]:
@@ -46,29 +49,33 @@ class TariffService:
     async def create_tariff(self, tariff_data: TariffCreate) -> TariffResponse:
         """Создаёт тариф"""
         tariff = await self.tariff_repo.create(tariff_data)
-        await self.tariff_repo.session.commit()
+        await self.session.commit()
         return TariffResponse.model_validate(tariff)
 
     async def update_tariff(
-        self, tariff_id: int, tariff_data: TariffUpdate,
+        self,
+        tariff_id: int,
+        tariff_data: TariffUpdate,
     ) -> TariffResponse:
         """Полное обновление тарифа"""
         tariff = await self.tariff_repo.get_by_id(tariff_id)
         if not tariff:
             raise TariffNotFoundError(tariff_id)
         updated = await self.tariff_repo.update(tariff, tariff_data)
-        await self.tariff_repo.session.commit()
+        await self.session.commit()
         return TariffResponse.model_validate(updated)
 
     async def partial_update_tariff(
-        self, tariff_id: int, tariff_data: TariffPartialUpdate,
+        self,
+        tariff_id: int,
+        tariff_data: TariffPartialUpdate,
     ) -> TariffResponse:
         """Частичное обновление тарифа"""
         tariff = await self.tariff_repo.get_by_id(tariff_id)
         if not tariff:
             raise TariffNotFoundError(tariff_id)
         updated = await self.tariff_repo.partial_update(tariff, tariff_data)
-        await self.tariff_repo.session.commit()
+        await self.session.commit()
         return TariffResponse.model_validate(updated)
 
     async def delete_tariff(self, tariff_id: int) -> None:
@@ -76,5 +83,9 @@ class TariffService:
         tariff = await self.tariff_repo.get_by_id(tariff_id)
         if not tariff:
             raise TariffNotFoundError(tariff_id)
-        await self.tariff_repo.delete(tariff)
-        await self.tariff_repo.session.commit()
+        try:
+            await self.tariff_repo.delete(tariff)
+            await self.session.commit()
+        except IntegrityError as error:
+            await self.session.rollback()
+            raise TariffInUseError(tariff_id) from error
