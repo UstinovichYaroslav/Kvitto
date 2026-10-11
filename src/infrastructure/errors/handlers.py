@@ -36,3 +36,10 @@ def handle_internal_error(error: Exception) -> Never:
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         detail=f"Internal server error: {error!s}",
     )
+
+
+def handle_tariff_in_use() -> Never:
+    raise HTTPException(
+        status_code=status.HTTP_409_CONFLICT,
+        detail="Tariff is in use",
+    )
