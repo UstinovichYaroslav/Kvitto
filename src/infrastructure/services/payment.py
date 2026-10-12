@@ -22,7 +22,7 @@ from schemas.payment import (
 class PaymentStateMachine:
     VALID_TRANSITIONS: ClassVar[dict[PaymentStatus, frozenset[PaymentStatus]]] = {
         PaymentStatus.PENDING: frozenset(
-            {PaymentStatus.SUCCEEDED, PaymentStatus.FAILED}
+            {PaymentStatus.SUCCEEDED, PaymentStatus.FAILED},
         ),
         PaymentStatus.SUCCEEDED: frozenset({PaymentStatus.REFUNDED}),
         PaymentStatus.FAILED: frozenset(),

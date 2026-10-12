@@ -23,17 +23,22 @@ class PaymentMethod(StrEnum):
 class Payment(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     status: Mapped[str] = mapped_column(
-        String(20), nullable=False, default=PaymentStatus.PENDING,
+        String(20),
+        nullable=False,
+        default=PaymentStatus.PENDING,
     )
     tariff_id: Mapped[int] = mapped_column(ForeignKey("tariffs.id"), nullable=False)
     amount: Mapped[int] = mapped_column(Integer, nullable=False)  # в копейках
     discount: Mapped[int] = mapped_column(
-        Integer, nullable=False, default=0,
+        Integer,
+        nullable=False,
+        default=0,
     )  # в копейках
     method: Mapped[str] = mapped_column(String(20), nullable=False)
     installment_months: Mapped[int | None] = mapped_column(Integer, nullable=True)
     schedule: Mapped[list[int] | None] = mapped_column(
-        JSON, nullable=True,
+        JSON,
+        nullable=True,
     )  # список сумм в копейках
     email: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
@@ -41,5 +46,7 @@ class Payment(Base):
         default=lambda: datetime.now(UTC),
     )
     idempotency_key: Mapped[str | None] = mapped_column(
-        String(255), unique=True, nullable=True,
+        String(255),
+        unique=True,
+        nullable=True,
     )

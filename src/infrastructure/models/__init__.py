@@ -1,11 +1,9 @@
 __all__ = [
     "Base",
     "Payment",
-    "PaymentMethod",
-    "PaymentStatus",
     "Tariff",
 ]
 
 from .base import Base
-from .payment import Payment, PaymentMethod, PaymentStatus
+from .payment import Payment
 from .tariff import Tariff
