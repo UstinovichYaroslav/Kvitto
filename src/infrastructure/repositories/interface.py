@@ -26,6 +26,10 @@ class IPaymentRepository(IRepository):
         pass
 
     @abstractmethod
+    async def get_by_idempotency_key(self, key: str) -> Any:
+        pass
+
+    @abstractmethod
     async def update(
         self,
         payment: Any,
@@ -34,7 +38,19 @@ class IPaymentRepository(IRepository):
         pass
 
     @abstractmethod
+    async def partial_update(
+        self,
+        payment: Any,
+        payment_data: Any,
+    ) -> Any:
+        pass
+
+    @abstractmethod
     async def delete(self, payment: Any) -> None:
+        pass
+
+    @abstractmethod
+    async def update_status(self, payment: Any, new_status: str) -> Any:
         pass
 
 
@@ -54,11 +70,19 @@ class ITariffRepository(IRepository):
     @abstractmethod
     async def update(
         self,
-        tariff_id: int,
+        tariff: Any,
         tariff_data: Any,
     ) -> Any:
         pass
 
     @abstractmethod
-    async def delete(self, tariff_id: int) -> None:
+    async def partial_update(
+        self,
+        tariff: Any,
+        tariff_data: Any,
+    ) -> Any:
+        pass
+
+    @abstractmethod
+    async def delete(self, tariff: Any) -> None:
         pass
