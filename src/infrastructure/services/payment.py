@@ -139,18 +139,9 @@ class PaymentService:
 
         return payment
 
-    async def process_webhook(self, webhook_data: WebhookRequest) -> dict:
+    async def process_webhook(self, webhook_data: "WebhookRequest") -> dict:
         """Обрабатывает вебхук от банка"""
-        payment = await self.get_payment_by_id(webhook_data.payment_id)
-
-        if not self.validate_status_transition(payment.status, webhook_data.status):
-            msg = "invalid_transition"
-            raise ValueError(msg)  # TODO custom error
-
-        await self.update_payment_status(webhook_data.payment_id, webhook_data.status)
-        await self.session.commit()
-
-        return WebhookResponse().model_dump()
+        return await self.webhook_handler.process_bank_webhook(webhook_data)
 
     async def update_payment(
         self,
