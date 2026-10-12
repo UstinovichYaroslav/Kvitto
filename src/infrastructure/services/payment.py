@@ -1,19 +1,21 @@
 from typing import ClassVar
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from infrastructure.errors import PaymentNotFoundError
 from infrastructure.errors.payment import InvalidTransitionError
-from infrastructure.models.payment import PaymentStatus, PaymentMethod
-from infrastructure.repositories.payment import PaymentRepository
+from infrastructure.models.payment import PaymentMethod, PaymentStatus
+from infrastructure.repositories.interface import IPaymentRepository
+from infrastructure.services.calculators import (
+    DiscountCalculator,
+    InstallmentCalculator,
+)
+from infrastructure.services.handlers import WebhookHandler
+from infrastructure.services.validators import PromoCodeValidator
 from schemas.payment import (
     PaymentCreate,
     PaymentCreateRequest,
     PaymentPartialUpdate,
     PaymentResponse,
     PaymentUpdate,
-    WebhookRequest,
-    WebhookResponse,
 )
 
 
@@ -45,9 +47,9 @@ class PaymentService:
         PaymentStatus.REFUNDED: [],
     }
 
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-        self.payment_repo = PaymentRepository(session)
+    def __init__(self, payment_repo: IPaymentRepository) -> None:
+        self.payment_repo = payment_repo
+        self.webhook_handler = WebhookHandler(payment_repo)
 
     async def get_all_payments(self) -> list[PaymentResponse]:
         """Возвращает список PaymentResponse"""
