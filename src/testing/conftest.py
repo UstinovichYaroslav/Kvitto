@@ -133,16 +133,23 @@ async def tariff_id(async_client: AsyncClient) -> AsyncGenerator[int]:
 TABLES_TO_TRUNCATE = ("payments", "tariffs")
 
 
-@pytest_asyncio.fixture(autouse=True, loop_scope="session")
+@pytest_asyncio.fixture(autouse=True, scope="function")
 async def clean_db() -> AsyncGenerator[None]:
     """Очищает все таблицы перед каждым тестом."""
-    async with db_helper.async_session_maker() as session:
-        await session.execute(
+    async with db_helper.engine.begin() as conn:
+        await conn.execute(
             text(
                 "TRUNCATE TABLE "
                 + ", ".join(TABLES_TO_TRUNCATE)
                 + " RESTART IDENTITY CASCADE",
             ),
         )
-        await session.commit()
     yield
+    async with db_helper.engine.begin() as conn:
+        await conn.execute(
+            text(
+                "TRUNCATE TABLE "
+                + ", ".join(TABLES_TO_TRUNCATE)
+                + " RESTART IDENTITY CASCADE",
+            ),
+        )
