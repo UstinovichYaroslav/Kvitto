@@ -31,20 +31,7 @@ class TariffService:
 
     async def init_default_tariffs(self) -> None:
         """Создаёт тарифы при старте, если их нет"""
-        existing = await self.tariff_repo.get_all()
-        if existing:
-            return
-
-        tariffs = [
-            TariffCreate(title="basic", price=990000),  # 9 900 ₽
-            TariffCreate(title="standard", price=1990000),  # 19 900 ₽
-            TariffCreate(title="premium", price=2990000),  # 29 900 ₽
-        ]
-
-        for tariff_data in tariffs:
-            await self.tariff_repo.create(tariff_data)
-
-        await self.tariff_repo.session.commit()
+        await self.initializer.init_default_tariffs()
 
     async def create_tariff(self, tariff_data: TariffCreate) -> TariffResponse:
         """Создаёт тариф"""
