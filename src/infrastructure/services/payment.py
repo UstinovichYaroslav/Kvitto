@@ -93,15 +93,15 @@ class PaymentService:
         payment_data: PaymentCreateRequest,
         idempotency_key: str | None,
         tariff_service: "TariffService",  # noqa: F821
-    ) -> PaymentResponse:
-        """Создаёт платёж с валидацией"""
+    ) -> tuple[PaymentResponse, bool]:
+        """Создаёт платёж с валидацией. Возвращает (payment, was_created)"""
         # Проверка idempotency
         if idempotency_key:
             existing_payment = await self.get_payment_by_idempotency_key(
                 idempotency_key,
             )
             if existing_payment:
-                return existing_payment
+                return existing_payment, False
 
         # Получаем тариф
         tariff = await tariff_service.get_tariff_by_id(payment_data.tariff_id)
@@ -137,7 +137,7 @@ class PaymentService:
         )
         await self.payment_repo.session.commit()
 
-        return payment
+        return payment, True
 
     async def process_webhook(self, webhook_data: "WebhookRequest") -> dict:
         """Обрабатывает вебхук от банка"""
