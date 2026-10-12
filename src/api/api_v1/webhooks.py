@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from api.api_v1.dependencies import payment_service
 from infrastructure.errors import PaymentNotFoundError
+from infrastructure.errors.payment import InvalidTransitionError
 from infrastructure.services import PaymentService
 from schemas.payment import (
     WebhookErrorResponse,
@@ -27,10 +28,8 @@ async def webhook_bank(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Payment not found",
         ) from None
-    except ValueError as e:
-        if str(e) == "invalid_transition":
-            return JSONResponse(
-                status_code=status.HTTP_409_CONFLICT,
-                content=WebhookErrorResponse(error="invalid_transition").model_dump(),
-            )
-        raise
+    except InvalidTransitionError:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content=WebhookErrorResponse(error="invalid_transition").model_dump(),
+        )
