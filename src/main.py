@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from api import api_router
 from core import settings
 from infrastructure.database import db_helper
+from infrastructure.repositories.tariff import TariffRepository
 from infrastructure.services.tariff import TariffService
 
 
@@ -14,7 +15,8 @@ from infrastructure.services.tariff import TariffService
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # noqa: ARG001
     # Startup
     async with db_helper.async_session_maker() as session:
-        tariff_service = TariffService(session)
+        tariff_repo = TariffRepository(session)
+        tariff_service = TariffService(tariff_repo)
         await tariff_service.init_default_tariffs()
     yield
     # Shutdown
