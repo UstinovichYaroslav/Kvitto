@@ -1,13 +1,11 @@
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from infrastructure.models.tariff import Tariff
+from infrastructure.repositories.interface import ITariffRepository
 from schemas.tariff import TariffCreate, TariffPartialUpdate, TariffUpdate
 
 
-class TariffRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
+class TariffRepository(ITariffRepository):
 
     async def get_all(self) -> list[Tariff]:
         stmt = select(Tariff).order_by(Tariff.id)
