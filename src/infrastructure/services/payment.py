@@ -108,7 +108,7 @@ class PaymentService:
         PromoCodeValidator.validate(payment_data.promo_code)
 
         # Рассчитываем скидку
-        discount, amount = self.calculate_discount(
+        discount, amount = DiscountCalculator.calculate(
             tariff.price,
             payment_data.promo_code,
         )
@@ -116,7 +116,7 @@ class PaymentService:
         # Рассчитываем график рассрочки
         schedule = None
         if payment_data.method == PaymentMethod.INSTALLMENT:
-            schedule = self.calculate_installment_schedule(
+            schedule = InstallmentCalculator.calculate_schedule(
                 amount,
                 payment_data.installment_months,
             )
