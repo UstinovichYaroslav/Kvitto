@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, status
+from fastapi import APIRouter, Depends, Header, Response, status
 
 from api.api_v1.dependencies import payment_service, tariff_service
 from infrastructure.errors import (
@@ -33,22 +33,25 @@ async def get_payments(
     return await payment_svc.get_all_payments()
 
 
-@router.post(
-    "",
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("")
 async def create_payment(
     payment_data: PaymentCreateRequest,
     tariff_svc: Annotated[TariffService, Depends(tariff_service)],
     payment_svc: Annotated[PaymentService, Depends(payment_service)],
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
+    response: Response = None,
 ) -> PaymentResponse:
     try:
-        return await payment_svc.create_payment_with_validation(
+        payment, was_created = await payment_svc.create_payment_with_validation(
             payment_data,
             idempotency_key,
             tariff_svc,
         )
+        if was_created:
+            response.status_code = status.HTTP_201_CREATED
+        else:
+            response.status_code = status.HTTP_200_OK
+        return payment
     except TariffNotFoundError:
         handle_tariff_not_found()
     except ValueError as e:
