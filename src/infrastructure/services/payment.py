@@ -105,9 +105,7 @@ class PaymentService:
         tariff = await tariff_service.get_tariff_by_id(payment_data.tariff_id)
 
         # Проверяем промокод
-        if payment_data.promo_code and payment_data.promo_code.upper() != "KVITTO10":
-            msg = "Invalid promo code"
-            raise ValueError(msg)
+        PromoCodeValidator.validate(payment_data.promo_code)
 
         # Рассчитываем скидку
         discount, amount = self.calculate_discount(
