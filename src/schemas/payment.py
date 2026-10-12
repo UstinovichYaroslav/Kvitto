@@ -1,17 +1,17 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from infrastructure.models.payment import PaymentMethod
 
 
 class PaymentCreateRequest(BaseModel):
-    tariff_id: int
-    email: str
+    tariff_id: int = Field(gt=0)
+    email: EmailStr
     method: PaymentMethod
     installment_months: int | None = Field(None, ge=3, le=12)
-    promo_code: str | None = None
+    promo_code: str | None = Field(None, max_length=50)
 
     @field_validator("installment_months")
     @classmethod
@@ -26,36 +26,36 @@ class PaymentCreateRequest(BaseModel):
 
 
 class PaymentCreate(BaseModel):
-    tariff_id: int
-    amount: int
-    discount: int
+    tariff_id: int = Field(gt=0)
+    amount: int = Field(ge=0)
+    discount: int = Field(ge=0)
     method: str
-    email: str
-    installment_months: int | None = None
+    email: EmailStr
+    installment_months: int | None = Field(None, ge=3, le=12)
     schedule: list[int] | None = None
-    idempotency_key: str | None = None
+    idempotency_key: str | None = Field(None, max_length=100)
 
 
 class PaymentUpdate(BaseModel):
     status: str
-    amount: int
-    discount: int
+    amount: int = Field(ge=0)
+    discount: int = Field(ge=0)
     method: str
-    email: str
-    installment_months: int
+    email: EmailStr
+    installment_months: int = Field(ge=3, le=12)
     schedule: list[int]
-    idempotency_key: str
+    idempotency_key: str = Field(max_length=100)
 
 
 class PaymentPartialUpdate(BaseModel):
     status: str | None = None
-    amount: int | None = None
-    discount: int | None = None
+    amount: int | None = Field(None, ge=0)
+    discount: int | None = Field(None, ge=0)
     method: str | None = None
-    email: str | None = None
-    installment_months: int | None = None
+    email: EmailStr | None = None
+    installment_months: int | None = Field(None, ge=3, le=12)
     schedule: list[int] | None = None
-    idempotency_key: str | None = None
+    idempotency_key: str | None = Field(None, max_length=100)
 
 
 class PaymentResponse(BaseModel):
@@ -74,7 +74,7 @@ class PaymentResponse(BaseModel):
 
 
 class WebhookRequest(BaseModel):
-    payment_id: int
+    payment_id: int = Field(gt=0)
     status: str
 
 
